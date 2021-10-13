@@ -1,4 +1,4 @@
-import React from "react"; // React must be in scope when using JSX
+import React from "react"; // React must be in scope when using JSX. Yes, TS, I know that it's not used explicitly
 import Movie from "./Movie";
 import { APIResponse } from "../types";
 

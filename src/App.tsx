@@ -1,7 +1,8 @@
 import "./App.css";
-import React, { useState } from "react"; // React must be in scope when using JSX
-import { API_KEY, STARTUP_MESSAGE } from "./constants";
+import React, { useState } from "react"; // React must be in scope when using JSX. Yes, TS, I know that it's not used explicitly
+import { API_URL, STARTUP_MESSAGE } from "./constants";
 import { APIResponse, InputEvent } from "./types";
+import { sortBy } from "./utils";
 import MoviesContainer from "./components/MoviesContainer";
 
 export default function App(): JSX.Element {
@@ -15,6 +16,8 @@ export default function App(): JSX.Element {
 	const [persistentSearchQuery, setPersistentSearchQuery] = useState("");
 	const [movies, setMovies] = useState<APIResponse["Search"]>([]);
 	const [pages, setPages] = useState(0);
+	const [sortValue, setSortValue] = useState("—");
+	const [isAscending, setIsAscending] = useState(true);
 
 	const handleChange = ({ target: { value } }: InputEvent): void => {
 		setSearchQuery(value);
@@ -37,9 +40,7 @@ export default function App(): JSX.Element {
 			returnToStartupState();
 			return;
 		}
-		const apiResponse = await fetch(
-			`http://www.omdbapi.com/?apikey=${API_KEY}&s=${query}&page=${page}`
-		);
+		const apiResponse = await fetch(`${API_URL}&s=${query}&page=${page}`);
 		const {
 			Search: results,
 			totalResults,
@@ -47,7 +48,7 @@ export default function App(): JSX.Element {
 			Error: error,
 		} = await apiResponse.json();
 		if (response === "True") {
-			setMovies(results);
+			setMovies(sortBy(results, sortValue, isAscending));
 			// A solution to beforementioned pagination breaking
 			if (saveQuery) {
 				setPersistentSearchQuery(searchQuery);
@@ -57,6 +58,16 @@ export default function App(): JSX.Element {
 			returnToStartupState();
 			setNoMoviesMessage(error);
 		}
+	};
+
+	/*
+		Look, this works only within a page. Sorting everything would mean
+		fetching all movies at once (and API doesn't provide query options for sorting)
+		Which I kinda can't implement. Yeah, no
+	*/
+	const handleSort = ({ target: { value } }: InputEvent): void => {
+		setSortValue(value);
+		setMovies(sortBy(movies, value, isAscending));
 	};
 
 	function renderPagination(pages: number): JSX.Element[] {
@@ -73,19 +84,39 @@ export default function App(): JSX.Element {
 
 	return (
 		<div>
-			<input
-				type="text"
-				id="movie-search-text"
-				onChange={handleChange}
-				value={searchQuery}
-				placeholder="Search for a movie"
-			/>
-			<input
-				type="button"
-				id="search-button"
-				onClick={() => handleSearch(searchQuery, 1, true)}
-				value="Search"
-			/>
+			<div>
+				<input
+					type="text"
+					id="movie-search-text"
+					onChange={handleChange}
+					value={searchQuery}
+					placeholder="Search for a movie"
+				/>
+				<input
+					type="button"
+					id="search-button"
+					onClick={() => handleSearch(searchQuery, 1, true)}
+					value="Search"
+				/>
+			</div>
+			<div>
+				Sort by:
+				<select value={sortValue} onChange={handleSort}>
+					{["—", "imdbID", "Title", "Poster", "Type"].map((value) => (
+						<option key={value} value={value}>
+							{value}
+						</option>
+					))}
+				</select>
+				<input
+					type="checkbox"
+					id="sortDirection"
+					name="sortDirection"
+					checked={isAscending}
+					onChange={({ target: { checked } }) => {setIsAscending(checked); setMovies(sortBy(movies, sortValue, checked));}}
+				/>
+				<label htmlFor="sortDirection">Ascending</label>
+			</div>
 			<div>
 				{pages ? (
 					<>
