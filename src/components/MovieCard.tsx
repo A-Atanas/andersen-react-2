@@ -10,7 +10,7 @@ type MovieProps = {
 
 export default function MovieCard({ Poster, Title, Type, imdbID }: MovieProps): JSX.Element {
 	return (
-		<Link to={`/${imdbID}`}>
+		<Link to={`/movies/${imdbID}`}>
 			<div>
 				<div key={imdbID}>
 					<h1>{Title}</h1>

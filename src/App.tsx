@@ -7,6 +7,8 @@ import { sortBy } from "./utils";
 import MoviesContainer from "./components/MoviesContainer";
 import SearchPanel from "./components/SearchPanel";
 import MoviePage from "./components/MoviePage";
+import NavPanel from "./components/NavPanel";
+import AboutPage from "./components/AboutPage";
 
 export default function App(): JSX.Element {
 	/*
@@ -87,6 +89,7 @@ export default function App(): JSX.Element {
 
 	return (
 		<Router>
+			<NavPanel />
 			<Switch>
 				<Route exact path="/">
 					<div>
@@ -116,8 +119,11 @@ export default function App(): JSX.Element {
 						</div>
 					</div>
 				</Route>
-				<Route path="/:movieID">
+				<Route path="/movies/:movieID">
 					<MoviePage />
+				</Route>
+				<Route path="/about">
+					<AboutPage />
 				</Route>
 			</Switch>
 		</Router>
