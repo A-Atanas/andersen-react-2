@@ -1,9 +1,11 @@
 import "./App.css";
 import React, { useState } from "react"; // React must be in scope when using JSX. Yes, TS, I know that it's not used explicitly
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { API_URL, STARTUP_MESSAGE } from "./constants";
-import { APIResponse, InputEvent } from "./types";
+import { APIResponse, DestructuredInputEvent } from "./types";
 import { sortBy } from "./utils";
 import MoviesContainer from "./components/MoviesContainer";
+import SearchPanel from "./components/SearchPanel";
 
 export default function App(): JSX.Element {
 	/*
@@ -19,7 +21,7 @@ export default function App(): JSX.Element {
 	const [sortValue, setSortValue] = useState("—");
 	const [isAscending, setIsAscending] = useState(true);
 
-	const handleChange = ({ target: { value } }: InputEvent): void => {
+	const handleChange = ({ target: { value } }: DestructuredInputEvent): void => {
 		setSearchQuery(value);
 	};
 
@@ -65,7 +67,7 @@ export default function App(): JSX.Element {
 		fetching all movies at once (and API doesn't provide query options for sorting)
 		Which I kinda can't implement. Yeah, no
 	*/
-	const handleSort = ({ target: { value } }: InputEvent): void => {
+	const handleSort = ({ target: { value } }: DestructuredInputEvent): void => {
 		setSortValue(value);
 		setMovies(sortBy(movies, value, isAscending));
 	};
@@ -83,52 +85,37 @@ export default function App(): JSX.Element {
 	}
 
 	return (
-		<div>
-			<div>
-				<input
-					type="text"
-					id="movie-search-text"
-					onChange={handleChange}
-					value={searchQuery}
-					placeholder="Search for a movie"
-				/>
-				<input
-					type="button"
-					id="search-button"
-					onClick={() => handleSearch(searchQuery, 1, true)}
-					value="Search"
-				/>
-			</div>
-			<div>
-				Sort by:
-				<select value={sortValue} onChange={handleSort}>
-					{["—", "imdbID", "Title", "Poster", "Type"].map((value) => (
-						<option key={value} value={value}>
-							{value}
-						</option>
-					))}
-				</select>
-				<input
-					type="checkbox"
-					id="sortDirection"
-					name="sortDirection"
-					checked={isAscending}
-					onChange={({ target: { checked } }) => {setIsAscending(checked); setMovies(sortBy(movies, sortValue, checked));}}
-				/>
-				<label htmlFor="sortDirection">Ascending</label>
-			</div>
-			<div>
-				{pages ? (
-					<>
-						<h1>Showing results for: {persistentSearchQuery}</h1>
-						{renderPagination(pages)}
-						<MoviesContainer movies={movies} />
-						{renderPagination(pages)}
-					</>
-				) : (
-					<h1>{noMoviesMessage}</h1>
-				)}
-			</div>
-		</div>
+		<Router>
+			<Switch>
+				<Route exact path="/">
+					<div>
+						<SearchPanel
+							handleSearch={handleSearch}
+							handleChange={handleChange}
+							setSortDirection={setIsAscending}
+							searchQuery={searchQuery}
+							sortValue={sortValue}
+							isAscending={isAscending}
+							handleSort={handleSort}
+							sortMovies={(direction) =>
+								setMovies(sortBy(movies, sortValue, direction))
+							}
+						/>
+						<div>
+							{pages ? (
+								<>
+									<h1>Showing results for: {persistentSearchQuery}</h1>
+									{renderPagination(pages)}
+									<MoviesContainer movies={movies} />
+									{renderPagination(pages)}
+								</>
+							) : (
+								<h1>{noMoviesMessage}</h1>
+							)}
+						</div>
+					</div>
+				</Route>
+			</Switch>
+		</Router>
 	);
 }

@@ -1,4 +1,4 @@
-export type InputEvent = {
+export type DestructuredInputEvent = {
 	target: {
 		value: string;
 	};
