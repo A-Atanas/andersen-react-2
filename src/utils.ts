@@ -1,10 +1,10 @@
-import { APIResponse } from "./types";
+import { APISearchResponse } from "./types";
 
 export const sortBy = (
-	array: APIResponse["Search"],
+	array: APISearchResponse["Search"],
 	key: string,
 	ascending: boolean
-): APIResponse["Search"] => {
+): APISearchResponse["Search"] => {
 	if (key === "—") return array;
 	return array.sort((a: Record<string, string>, b: Record<string, string>) => {
 		if (ascending) {

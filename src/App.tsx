@@ -2,10 +2,11 @@ import "./App.css";
 import React, { useState } from "react"; // React must be in scope when using JSX. Yes, TS, I know that it's not used explicitly
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { API_URL, STARTUP_MESSAGE } from "./constants";
-import { APIResponse, DestructuredInputEvent } from "./types";
+import { APISearchResponse, DestructuredInputEvent } from "./types";
 import { sortBy } from "./utils";
 import MoviesContainer from "./components/MoviesContainer";
 import SearchPanel from "./components/SearchPanel";
+import MoviePage from "./components/MoviePage";
 
 export default function App(): JSX.Element {
 	/*
@@ -16,7 +17,7 @@ export default function App(): JSX.Element {
 	const [noMoviesMessage, setNoMoviesMessage] = useState(STARTUP_MESSAGE);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [persistentSearchQuery, setPersistentSearchQuery] = useState("");
-	const [movies, setMovies] = useState<APIResponse["Search"]>([]);
+	const [movies, setMovies] = useState<APISearchResponse["Search"]>([]);
 	const [pages, setPages] = useState(0);
 	const [sortValue, setSortValue] = useState("—");
 	const [isAscending, setIsAscending] = useState(true);
@@ -114,6 +115,9 @@ export default function App(): JSX.Element {
 							)}
 						</div>
 					</div>
+				</Route>
+				<Route path="/:movieID">
+					<MoviePage />
 				</Route>
 			</Switch>
 		</Router>
