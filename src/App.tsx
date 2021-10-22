@@ -1,9 +1,18 @@
 import "./App.css";
-import React, { useState } from "react"; // React must be in scope when using JSX. Yes, TS, I know that it's not used explicitly
+import React from "react"; // React must be in scope when using JSX. Yes, TS, I know that it's not used explicitly
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "./redux/hooks";
+import {
+	changeQuery,
+	resetStartupPageContents,
+	displayMovies,
+	handleSaveQuery,
+	changeSortDirection,
+	setPageQuantity,
+	changeSortValue,
+} from "./redux/movieListSlice";
 import { API_URL, STARTUP_MESSAGE } from "./constants";
-import { APISearchResponse, DestructuredInputEvent } from "./types";
-import { sortBy } from "./utils";
+import { DestructuredInputEvent } from "./types";
 import MoviesContainer from "./components/MoviesContainer";
 import SearchPanel from "./components/SearchPanel";
 import MoviePage from "./components/MoviePage";
@@ -16,23 +25,20 @@ export default function App(): JSX.Element {
 		That's why I decided to make a persistent version of the search query,
 		so the pagination would work fine even if you change the search input value but not press search again
 	*/
-	const [noMoviesMessage, setNoMoviesMessage] = useState(STARTUP_MESSAGE);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [persistentSearchQuery, setPersistentSearchQuery] = useState("");
-	const [movies, setMovies] = useState<APISearchResponse["Search"]>([]);
-	const [pages, setPages] = useState(0);
-	const [sortValue, setSortValue] = useState("—");
-	const [isAscending, setIsAscending] = useState(true);
+	const noMoviesMessage = useAppSelector(({ movieList: { noMoviesMessage } }) => noMoviesMessage);
+	const searchQuery = useAppSelector(({ movieList: { searchQuery } }) => searchQuery);
+	const persistentSearchQuery = useAppSelector(
+		({ movieList: { persistentSearchQuery } }) => persistentSearchQuery
+	);
+	const movies = useAppSelector(({ movieList: { movies } }) => movies);
+	const pages = useAppSelector(({ movieList: { pages } }) => pages);
+	const sortValue = useAppSelector(({ movieList: { sortValue } }) => sortValue);
+	const isAscending = useAppSelector(({ movieList: { isAscending } }) => isAscending);
+
+	const dispatch = useAppDispatch();
 
 	const handleChange = ({ target: { value } }: DestructuredInputEvent): void => {
-		setSearchQuery(value);
-	};
-
-	const returnToStartupState = (): void => {
-		setPersistentSearchQuery("");
-		setNoMoviesMessage(STARTUP_MESSAGE);
-		setMovies([]);
-		setPages(0);
+		dispatch(changeQuery(value));
 	};
 
 	/*
@@ -42,7 +48,7 @@ export default function App(): JSX.Element {
 	*/
 	const handleSearch = async (query: string, page: number, saveQuery: boolean): Promise<void> => {
 		if (!query) {
-			returnToStartupState();
+			dispatch(resetStartupPageContents(STARTUP_MESSAGE));
 			return;
 		}
 		const apiResponse = await fetch(`${API_URL}&s=${query}&page=${page}`);
@@ -53,15 +59,14 @@ export default function App(): JSX.Element {
 			Error: error,
 		} = await apiResponse.json();
 		if (response === "True") {
-			setMovies(sortBy(results, sortValue, isAscending));
+			dispatch(displayMovies([results, sortValue, isAscending]));
+			dispatch(setPageQuantity(Math.ceil(+totalResults / 10)));
 			// A solution to beforementioned pagination breaking
 			if (saveQuery) {
-				setPersistentSearchQuery(searchQuery);
+				dispatch(handleSaveQuery(query));
 			}
-			setPages(Math.ceil(+totalResults / 10));
 		} else {
-			returnToStartupState();
-			setNoMoviesMessage(error);
+			dispatch(resetStartupPageContents(error));
 		}
 	};
 
@@ -71,8 +76,8 @@ export default function App(): JSX.Element {
 		Which I kinda can't implement. Yeah, no
 	*/
 	const handleSort = ({ target: { value } }: DestructuredInputEvent): void => {
-		setSortValue(value);
-		setMovies(sortBy(movies, value, isAscending));
+		dispatch(changeSortValue(value));
+		dispatch(displayMovies([movies, value, isAscending]));
 	};
 
 	function renderPagination(pages: number): JSX.Element[] {
@@ -96,13 +101,15 @@ export default function App(): JSX.Element {
 						<SearchPanel
 							handleSearch={handleSearch}
 							handleChange={handleChange}
-							setSortDirection={setIsAscending}
+							setSortDirection={(isAscending) =>
+								dispatch(changeSortDirection(isAscending))
+							}
 							searchQuery={searchQuery}
 							sortValue={sortValue}
 							isAscending={isAscending}
 							handleSort={handleSort}
 							sortMovies={(direction) =>
-								setMovies(sortBy(movies, sortValue, direction))
+								dispatch(displayMovies([movies, sortValue, direction, pages]))
 							}
 						/>
 						<div>

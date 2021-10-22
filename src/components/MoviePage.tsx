@@ -30,7 +30,7 @@ export default function MoviePage(): JSX.Element {
 					switch (elem[0]) {
 					case "Ratings":
 						return (
-							<>
+							<React.Fragment key={elem[0]}>
 								<div>Ratings:</div>
 								<ul>
 									{(elem[1] as { Source: string; Value: string }[]).map(
@@ -41,11 +41,12 @@ export default function MoviePage(): JSX.Element {
 										)
 									)}
 								</ul>
-							</>
+							</React.Fragment>
 						);
 					case "Poster":
 						return (
 							<img
+								key={elem[0]}
 								src={elem[1] as string}
 								alt="The image couldn't load. Sorry!"
 							/>
