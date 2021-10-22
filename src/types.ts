@@ -44,3 +44,8 @@ export interface Movie {
 	imbdRating: string;
 	imbdVotes: string;
 }
+
+export type Action = {
+	type: string;
+	payload: unknown;
+}
